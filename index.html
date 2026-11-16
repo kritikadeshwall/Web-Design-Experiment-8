@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Management System</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f1f4f9;
+            padding: 30px 15px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            background: #4b63d3;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .delete {
+            background: #e74c3c;
+        }
+
+        .edit {
+            background: #2196a8;
+        }
+
+        .book {
+            background: #f5f6fa;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #4b63d3;
+            border-radius: 5px;
+        }
+
+        .book h3 {
+            margin-bottom: 8px;
+        }
+
+        .message {
+            margin-top: 15px;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Book Management System</h1>
+
+        <input type="text" id="title" placeholder="Enter Book Title">
+
+        <input type="text" id="author" placeholder="Enter Author Name">
+
+        <input type="text" id="year" placeholder="Enter Publication Year">
+
+        <button onclick="addBook()">Add Book</button>
+
+        <h2>Book Collection</h2>
+
+        <div id="bookList"></div>
+
+        <p class="message" id="message"></p>
+
+    </div>
+
+    <script>
+
+        const API_URL = "http://localhost:3000/books";
+
+        let editId = null;
+
+        async function getBooks() {
+            try {
+                const response = await fetch(API_URL);
+                const books = await response.json();
+
+                const bookList = document.getElementById("bookList");
+                bookList.innerHTML = "";
+
+                books.forEach(book => {
+                    bookList.innerHTML += `
+                        <div class="book">
+                            <h3>${book.title}</h3>
+                            <p>Author: ${book.author}</p>
+                            <p>Year: ${book.year}</p>
+
+                            <button class="edit"
+                                onclick="editBook('${book.id}')">
+                                Edit
+                            </button>
+
+                            <button class="delete"
+                                onclick="deleteBook('${book.id}')">
+                                Delete
+                            </button>
+                        </div>
+                    `;
+                });
+
+                if (books.length === 0) {
+                    bookList.innerHTML = "<p>No books available.</p>";
+                }
+
+            } catch (error) {
+                document.getElementById("message").innerText =
+                    "Please start the Node.js server first.";
+            }
+        }
+
+        async function addBook() {
+
+            const title = document.getElementById("title").value;
+            const author = document.getElementById("author").value;
+            const year = document.getElementById("year").value;
+
+            if (!title || !author || !year) {
+                alert("Please fill all fields.");
+                return;
+            }
+
+            const book = { title, author, year };
+
+            try {
+                if (editId !== null) {
+                    await fetch(API_URL + "/" + editId, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(book)
+                    });
+
+                    editId = null;
+
+                } else {
+                    await fetch(API_URL, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(book)
+                    });
+                }
+
+                document.getElementById("title").value = "";
+                document.getElementById("author").value = "";
+                document.getElementById("year").value = "";
+
+                getBooks();
+
+            } catch (error) {
+                alert("Unable to connect to server.");
+            }
+        }
+
+        async function editBook(id) {
+
+            const response = await fetch(API_URL);
+            const books = await response.json();
+
+            const book = books.find(b => String(b.id) === String(id));
+
+            if (book) {
+                document.getElementById("title").value = book.title;
+                document.getElementById("author").value = book.author;
+                document.getElementById("year").value = book.year;
+
+                editId = id;
+            }
+        }
+
+        async function deleteBook(id) {
+
+            await fetch(API_URL + "/" + id, {
+                method: "DELETE"
+            });
+
+            getBooks();
+        }
+
+        getBooks();
+
+    </script>
+
+</body>
+</html>

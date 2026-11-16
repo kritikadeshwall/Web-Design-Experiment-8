@@ -1,0 +1,14 @@
+
+{
+  "name": "book-management-system",
+  "version": "1.0.0",
+  "description": "RESTful API for managing books",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "cors": "^2.8.5"
+  }
+}
